@@ -7,3 +7,13 @@ Secondly full information is retrieved for all the asteroid IDs retreived, in se
 There's two application classes - App doing main initialization and the first Feed query, which it gives to the ApprachDetector.
 This one iterates through the list and retrieves fly-by data (distance, date, speed etc). 
 The 10 closest fly-byes are shown in the terminal.
+
+## Build
+```
+./gradlew build
+```
+
+## Run
+```
+./gradlew run
+```
