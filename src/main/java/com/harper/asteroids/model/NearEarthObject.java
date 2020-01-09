@@ -3,6 +3,8 @@ package com.harper.asteroids.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 /**
  * Definition for Neo - Near Earth Object
  *
@@ -25,9 +27,36 @@ public class NearEarthObject {
     private boolean potentiallyHazardous;
 
     @JsonProperty("close_approach_data")
-    private CloseApproachData[] closeApproachData;
+    private List<CloseApproachData> closeApproachData;
 
     @JsonProperty("is_sentry_object")
     private boolean isSentryObject;
 
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getNplUrl() {
+        return nplUrl;
+    }
+
+    public double getAbsoluteMagnitude() {
+        return absoluteMagnitude;
+    }
+
+    public boolean isPotentiallyHazardous() {
+        return potentiallyHazardous;
+    }
+
+    public List<CloseApproachData> getCloseApproachData() {
+        return closeApproachData;
+    }
+
+    public boolean isSentryObject() {
+        return isSentryObject;
+    }
 }

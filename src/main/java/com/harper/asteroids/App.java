@@ -5,12 +5,17 @@ package com.harper.asteroids;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.harper.asteroids.model.CloseApproachData;
 import com.harper.asteroids.model.Feed;
+import com.harper.asteroids.model.NearEarthObject;
 import org.glassfish.jersey.client.ClientConfig;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
@@ -29,14 +34,16 @@ import javax.ws.rs.core.Response;
 public class App {
 
     private static final String NEO_FEED_URL = "https://api.nasa.gov/neo/rest/v1/feed";
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd");
+
+    protected static String API_KEY = "DEMO_KEY";
 
     private Client client;
-    private String apiKey;
+
     private ObjectMapper mapper = new ObjectMapper();
 
     public App() {
-        apiKey = System.getProperty("API_KEY", "DEMO_KEY");
+
+
         ClientConfig configuration = new ClientConfig();
         client = ClientBuilder.newClient(configuration);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -46,28 +53,56 @@ public class App {
      * Scan space for asteroids close to earth
      */
     private void checkForAsteroids() {
-
+        LocalDate today = LocalDate.now();
         Response response = client
                 .target(NEO_FEED_URL)
-                .queryParam("start_date", dateFormat.format(new Date()))
-                .queryParam("api_key", apiKey)
+                .queryParam("start_date",  today.toString())
+                .queryParam("end_date", today.toString())
+                .queryParam("api_key", API_KEY)
                 .request(MediaType.APPLICATION_JSON)
                 .get();
         System.out.println("Got response: " + response);
-        ObjectMapper mapper = new ObjectMapper();
-        String content = response.readEntity(String.class);
+        if(response.getStatus() == Response.Status.OK.getStatusCode()) {
+            ObjectMapper mapper = new ObjectMapper();
+            String content = response.readEntity(String.class);
 
-        try {
-            Feed neoFeed = mapper.readValue(content, Feed.class);
-            System.out.println("Got neos! " + neoFeed);
 
-        } catch (IOException e) {
-            System.err.println("Failed scanning for asteroids: " + e);
+            try {
+                Feed neoFeed = mapper.readValue(content, Feed.class);
+                ApproachDetector approachDetector = new ApproachDetector(neoFeed.getAllObjectIds());
+
+                List<NearEarthObject> closest =  approachDetector.getClosestApproaches(10);
+                System.out.println("Hazard?   Distance(km)    When                             Name");
+                System.out.println("----------------------------------------------------------------------");
+                for(NearEarthObject neo: closest) {
+                    Optional<CloseApproachData> closestPass = neo.getCloseApproachData().stream()
+                            .min(Comparator.comparing(CloseApproachData::getMissDistance));
+
+                    if(closestPass.isEmpty()) continue;
+
+                    System.out.println(String.format("%s       %12.3f  %s    %s",
+                            (neo.isPotentiallyHazardous() ? "!!!" : " - "),
+                            closestPass.get().getMissDistance().getKilometers(),
+                            closestPass.get().getCloseApproachDateTime(),
+                            neo.getName()
+                            ));
+                }
+            } catch (IOException e) {
+                System.err.println("Failed scanning for asteroids: " + e);
+            }
         }
+        else {
+            System.err.println("Failed querying feed, got " + response.getStatus() + " " + response.getStatusInfo());
+        }
+
     }
 
 
     public static void main(String[] args) {
+        String apiKey = System.getenv("API_KEY");
+        if(apiKey != null && !apiKey.isBlank()) {
+            API_KEY = apiKey;
+        }
         new App().checkForAsteroids();
     }
 }

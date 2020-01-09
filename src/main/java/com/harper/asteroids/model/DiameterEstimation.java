@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class DiameterEstimation {
     @JsonProperty("estimated_diameter_min")
-    private double min;
+    private Double min;
 
     @JsonProperty("estimated_diameter_max")
-    private double max;
+    private Double max;
 }

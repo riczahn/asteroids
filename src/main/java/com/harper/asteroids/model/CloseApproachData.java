@@ -29,6 +29,27 @@ public class CloseApproachData {
     @JsonProperty("orbiting_body")
     private String orbitingBody;
 
+    public Date getCloseApproachDate() {
+        return closeApproachDate;
+    }
 
+    public Date getCloseApproachDateTime() {
+        return closeApproachDateTime;
+    }
 
+    public long getCloseApproachEpochDate() {
+        return closeApproachEpochDate;
+    }
+
+    public Velocities getRelativeVelocity() {
+        return relativeVelocity;
+    }
+
+    public Distances getMissDistance() {
+        return missDistance;
+    }
+
+    public String getOrbitingBody() {
+        return orbitingBody;
+    }
 }

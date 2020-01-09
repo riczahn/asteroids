@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URL;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class TestParsing {
@@ -26,6 +27,7 @@ public class TestParsing {
         Feed feed = mapper.readValue(input, Feed.class);
         System.out.println("Check feed");
         assertNotNull(feed);
+        assertEquals(feed.getElementCount(), feed.getAllObjectIds().size());
 
     }
 
