@@ -31,18 +31,19 @@ public class ApproachDetector {
 
     /**
      * Get the n closest approaches in this period
+     *
      * @param limit - n
      */
     public List<NearEarthObject> getClosestApproaches(int limit) {
         List<NearEarthObject> neos = new ArrayList<>(limit);
-        for(String id: nearEarthObjectIds) {
+        for (String id : nearEarthObjectIds) {
             try {
                 System.out.println("Check passing of object " + id);
                 Response response = client
-                    .target(NEO_URL + id)
-                    .queryParam("api_key", App.API_KEY)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
+                        .target(NEO_URL + id)
+                        .queryParam("api_key", App.API_KEY)
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
 
                 NearEarthObject neo = mapper.readValue(response.readEntity(String.class), NearEarthObject.class);
                 neos.add(neo);
@@ -57,14 +58,15 @@ public class ApproachDetector {
 
     /**
      * Get the closest passing.
-     * @param neos the NearEarthObjects
+     *
+     * @param neos  the NearEarthObjects
      * @param limit
      * @return
      */
     public static List<NearEarthObject> getClosest(List<NearEarthObject> neos, int limit) {
         //TODO: Should ignore the passes that are not today/this week.
         return neos.stream()
-                .filter(neo -> neo.getCloseApproachData() != null && ! neo.getCloseApproachData().isEmpty())
+                .filter(neo -> neo.getCloseApproachData() != null && !neo.getCloseApproachData().isEmpty())
                 .sorted(new VicinityComparator())
                 .limit(limit)
                 .collect(Collectors.toList());

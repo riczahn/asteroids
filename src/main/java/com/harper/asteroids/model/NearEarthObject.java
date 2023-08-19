@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Definition for Neo - Near Earth Object
- *
+ * <p>
  * TODO: why the h*** must I add this annotation to ignore unknown properties when I set it on ObjectMapper?
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
