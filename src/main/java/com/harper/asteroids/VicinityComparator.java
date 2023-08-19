@@ -10,13 +10,15 @@ import java.util.Optional;
 public class VicinityComparator implements Comparator<NearEarthObject> {
 
     public int compare(NearEarthObject neo1, NearEarthObject neo2) {
-
         Optional<Distances> neo1ClosestPass = neo1.getCloseApproachData().stream()
+                .filter(this::isCloseApproachDateWithinThisWeek)
                 .min(Comparator.comparing(CloseApproachData::getMissDistance))
-                .map(min -> min.getMissDistance());
+                .map(CloseApproachData::getMissDistance);
+
         Optional<Distances> neo2ClosestPass = neo2.getCloseApproachData().stream()
+                .filter(this::isCloseApproachDateWithinThisWeek)
                 .min(Comparator.comparing(CloseApproachData::getMissDistance))
-                .map(min -> min.getMissDistance());
+                .map(CloseApproachData::getMissDistance);
 
         if (neo1ClosestPass.isPresent()) {
             if (neo2ClosestPass.isPresent()) {
@@ -27,5 +29,10 @@ public class VicinityComparator implements Comparator<NearEarthObject> {
         } else {
             return -1;
         }
+    }
+
+    private boolean isCloseApproachDateWithinThisWeek(CloseApproachData closeApproachData) {
+        var approachDate = DateUtils.convertMillisToLocalDate(closeApproachData.getCloseApproachEpochDate());
+        return DateUtils.isDateWithinThisWeek(approachDate);
     }
 }

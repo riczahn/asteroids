@@ -8,11 +8,12 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.junit.Assert.assertEquals;
 
 public class TestApproachDetector {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     private NearEarthObject neo1, neo2;
 
     @Before
