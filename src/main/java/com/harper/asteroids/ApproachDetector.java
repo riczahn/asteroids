@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+
 /**
  * Receives a set of neo ids and rates them after earth proximity.
  * Retrieves the approach data for them and sorts to the n closest.
@@ -20,13 +22,14 @@ import java.util.stream.Collectors;
  */
 public class ApproachDetector {
     private static final String NEO_URL = "https://api.nasa.gov/neo/rest/v1/neo/";
+    private final ObjectMapper mapper;
     private List<String> nearEarthObjectIds;
     private Client client;
-    private ObjectMapper mapper = new ObjectMapper();
 
     public ApproachDetector(List<String> ids) {
         this.nearEarthObjectIds = ids;
         this.client = ClientBuilder.newClient();
+        mapper = getObjectMapper();
     }
 
     /**
@@ -54,6 +57,12 @@ public class ApproachDetector {
         System.out.println("Received " + neos.size() + " neos, now sorting");
 
         return getClosest(neos, limit);
+    }
+
+    private static ObjectMapper getObjectMapper() {
+        var mapper = new ObjectMapper();
+        mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
     }
 
     /**
