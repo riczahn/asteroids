@@ -8,18 +8,18 @@ import static java.time.ZoneOffset.UTC;
 
 public class DateUtils {
 
-    public static LocalDate convertMillisToLocalDate(Long milliseconds) {
+    public LocalDate convertMillisToLocalDate(Long milliseconds) {
         return Instant.ofEpochMilli(milliseconds).atOffset(UTC).toLocalDate();
     }
 
-    public static boolean isDateWithinThisWeek(LocalDate date) {
+    public boolean isDateWithinThisWeek(LocalDate date) {
         var thisWeeksMonday = getCurrentDate().with(DayOfWeek.MONDAY);
         var thisWeeksSunday = getCurrentDate().with(DayOfWeek.SUNDAY);
 
         return date.isAfter(thisWeeksMonday) && date.isBefore(thisWeeksSunday);
     }
 
-    public static LocalDate getCurrentDate() {
+    public LocalDate getCurrentDate() {
         return Instant.now().atOffset(UTC).toLocalDate();
     }
 }

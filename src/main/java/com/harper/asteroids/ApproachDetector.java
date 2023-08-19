@@ -73,7 +73,6 @@ public class ApproachDetector {
      * @return
      */
     public static List<NearEarthObject> getClosest(List<NearEarthObject> neos, int limit) {
-        //TODO: Should ignore the passes that are not today/this week.
         return neos.stream()
                 .filter(neo -> neo.getCloseApproachData() != null && !neo.getCloseApproachData().isEmpty())
                 .sorted(new VicinityComparator())
