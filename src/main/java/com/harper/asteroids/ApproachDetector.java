@@ -5,6 +5,10 @@ import com.harper.asteroids.model.NearEarthObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -32,11 +36,28 @@ public class ApproachDetector {
      * @param limit - n
      */
     public List<NearEarthObject> getClosestApproaches(int limit) {
-        List<NearEarthObject> neos = new ArrayList<>(limit);
-        for (String id : nearEarthObjectIds) {
-            var neo = getNeoWithId(id);
-            neos.add(neo);
+        var nThreads = nearEarthObjectIds.size();
+        ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
+
+        List<Future<NearEarthObject>> futures = new ArrayList<>(nThreads);
+        for (int i = 0; i < nThreads; i++) {
+            var neoId = nearEarthObjectIds.get(i);
+            Callable<NearEarthObject> task = () -> getNeoWithId(neoId);
+            futures.add(executorService.submit(task));
         }
+
+        // Wait for all tasks to complete and store the neo
+        List<NearEarthObject> neos = new ArrayList<>(limit);
+        for (int i = 0; i < nThreads; i++) {
+            try {
+                var nearEarthObject = futures.get(i).get();
+                neos.add(nearEarthObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        executorService.shutdown();
         System.out.println("Received " + neos.size() + " neos, now sorting");
 
         return getClosest(neos, limit);
