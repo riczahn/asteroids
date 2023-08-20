@@ -55,4 +55,8 @@ public class NearEarthObject {
     public boolean isSentryObject() {
         return isSentryObject;
     }
+
+    public void setCloseApproachData(List<CloseApproachData> closeApproachData) {
+        this.closeApproachData = closeApproachData;
+    }
 }

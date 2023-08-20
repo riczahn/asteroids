@@ -1,18 +1,11 @@
 package com.harper.asteroids;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harper.asteroids.model.NearEarthObject;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
  * Receives a set of neo ids and rates them after earth proximity.
@@ -21,15 +14,16 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
  * Alerts if someone is possibly hazardous.
  */
 public class ApproachDetector {
-    private static final String NEO_URL = "https://api.nasa.gov/neo/rest/v1/neo/";
-    private final ObjectMapper mapper;
-    private List<String> nearEarthObjectIds;
-    private Client client;
+    private final List<String> nearEarthObjectIds;
+    private final NeoRestApiClient neoRestApiClient;
 
     public ApproachDetector(List<String> ids) {
-        this.nearEarthObjectIds = ids;
-        this.client = ClientBuilder.newClient();
-        mapper = getObjectMapper();
+        this(ids, new NeoRestApiClient());
+    }
+
+    public ApproachDetector(List<String> nearEarthObjectIds, NeoRestApiClient neoRestApiClient) {
+        this.nearEarthObjectIds = nearEarthObjectIds;
+        this.neoRestApiClient = neoRestApiClient;
     }
 
     /**
@@ -40,29 +34,22 @@ public class ApproachDetector {
     public List<NearEarthObject> getClosestApproaches(int limit) {
         List<NearEarthObject> neos = new ArrayList<>(limit);
         for (String id : nearEarthObjectIds) {
-            try {
-                System.out.println("Check passing of object " + id);
-                Response response = client
-                        .target(NEO_URL + id)
-                        .queryParam("api_key", App.API_KEY)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
-
-                NearEarthObject neo = mapper.readValue(response.readEntity(String.class), NearEarthObject.class);
-                neos.add(neo);
-            } catch (IOException e) {
-                System.err.println("Failed scanning for asteroids: " + e);
-            }
+            var neo = getNeoWithId(id);
+            neos.add(neo);
         }
         System.out.println("Received " + neos.size() + " neos, now sorting");
 
         return getClosest(neos, limit);
     }
 
-    private static ObjectMapper getObjectMapper() {
-        var mapper = new ObjectMapper();
-        mapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
+    private NearEarthObject getNeoWithId(String id) {
+        try {
+            System.out.println("Check passing of object " + id);
+            return neoRestApiClient.getNeoWithId(id);
+        } catch (IOException e) {
+            System.err.println("Failed scanning for asteroids: " + e);
+            return null;
+        }
     }
 
     /**
