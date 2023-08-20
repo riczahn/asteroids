@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class ApproachDetector {
     private final List<String> nearEarthObjectIds;
     private final NeoRestApiClient neoRestApiClient;
+    private final NeoRestApiQueue queue;
 
     public ApproachDetector(List<String> ids) {
         this(ids, new NeoRestApiClient());
@@ -28,6 +29,7 @@ public class ApproachDetector {
     public ApproachDetector(List<String> nearEarthObjectIds, NeoRestApiClient neoRestApiClient) {
         this.nearEarthObjectIds = nearEarthObjectIds;
         this.neoRestApiClient = neoRestApiClient;
+        this.queue = NeoRestApiQueue.getInstance();
     }
 
     /**
@@ -36,31 +38,34 @@ public class ApproachDetector {
      * @param limit - n
      */
     public List<NearEarthObject> getClosestApproaches(int limit) {
-        var nThreads = nearEarthObjectIds.size();
-        ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
-
-        List<Future<NearEarthObject>> futures = new ArrayList<>(nThreads);
-        for (int i = 0; i < nThreads; i++) {
-            var neoId = nearEarthObjectIds.get(i);
-            Callable<NearEarthObject> task = () -> getNeoWithId(neoId);
-            futures.add(executorService.submit(task));
+        List<Future<NearEarthObject>> futures = new ArrayList<>(nearEarthObjectIds.size());
+        for (String neoId : nearEarthObjectIds) {
+            var task = createTaskToGetNeo(queue, neoId);
+            futures.add(task);
         }
 
-        // Wait for all tasks to complete and store the neo
-        List<NearEarthObject> neos = new ArrayList<>(limit);
-        for (int i = 0; i < nThreads; i++) {
+        List<NearEarthObject> neos = waitForTerminationAndGetResults(futures);
+        System.out.println("Received " + neos.size() + " neos, now sorting");
+
+        return getClosest(neos, limit);
+    }
+
+    private Future<NearEarthObject> createTaskToGetNeo(NeoRestApiQueue queue, String neoId) {
+        Callable<NearEarthObject> task = () -> getNeoWithId(neoId);
+        return queue.addGetNeoRequestToQueue(task);
+    }
+
+    private List<NearEarthObject> waitForTerminationAndGetResults(List<Future<NearEarthObject>> futures) {
+        List<NearEarthObject> neos = new ArrayList<>();
+        for (int i = 0; i < nearEarthObjectIds.size(); i++) {
             try {
                 var nearEarthObject = futures.get(i).get();
                 neos.add(nearEarthObject);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Unable to complete future number " + i + ": " + e);
             }
         }
-
-        executorService.shutdown();
-        System.out.println("Received " + neos.size() + " neos, now sorting");
-
-        return getClosest(neos, limit);
+        return neos;
     }
 
     private NearEarthObject getNeoWithId(String id) {

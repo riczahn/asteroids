@@ -101,5 +101,6 @@ public class App {
             API_KEY = apiKey;
         }
         new App().checkForAsteroids();
+        NeoRestApiQueue.getInstance().shutdown();
     }
 }
